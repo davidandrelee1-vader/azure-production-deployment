@@ -1,0 +1,78 @@
+
+# ==========================================
+# Azure Production Deployment - Git Ignore
+# ==========================================
+
+# Environment variables and secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.pfx
+*.p12
+
+# Terraform provider downloads
+**/.terraform/
+
+# Terraform state and backups
+*.tfstate
+*.tfstate.*
+*.tfvars
+*.tfvars.json
+*.tfplan
+*.tfstate.backup
+*terraform-state-backup*
+*tfstate-backup*
+
+# Terraform crash logs
+crash.log
+crash.*.log
+
+# Python cache and compiled files
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Python virtual environments
+.venv/
+venv/
+env/
+
+# Python packaging
+*.egg-info/
+build/
+dist/
+
+# IDE settings
+.vscode/
+.idea/
+
+# Operating system files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Local database files
+*.db
+*.sqlite
+*.sqlite3
+
+# Docker local overrides
+docker-compose.override.yml
+compose.override.yml
+
+# Logs and temporary files
+*.log
+*.tmp
+*.bak
+
+# Local Azure research files
+postgres-*-skus.json
+
+# Local test artifacts
+.coverage
+htmlcov/
+test-results/

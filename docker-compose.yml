@@ -1,0 +1,48 @@
+
+services:
+  api:
+    build:
+      context: ./app
+    image: azure-production-api:2.0
+    container_name: azure-production-flask
+    restart: "no"
+
+    ports:
+      - "127.0.0.1:5001:5000"
+
+    environment:
+      APP_ENV: development
+      PGHOST: postgres
+      PGPORT: "5432"
+      PGDATABASE: productiondb
+      PGUSER: appuser
+      PGPASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  postgres:
+    image: postgres:16
+    container_name: azure-production-postgres
+    restart: "no"
+
+    environment:
+      POSTGRES_DB: productiondb
+      POSTGRES_USER: appuser
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+
+    ports:
+      - "127.0.0.1:5432:5432"
+
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U appuser -d productiondb"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_data:

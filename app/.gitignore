@@ -1,0 +1,14 @@
+# Terraform state and local configuration
+**/.terraform/
+**/*.tfstate
+**/*.tfstate.*
+**/*.tfvars
+**/*.tfvars.json
+**/crash.log
+**/crash.*.log
+
+# Python
+__pycache__/
+.venv/
+.env
+**/.env
