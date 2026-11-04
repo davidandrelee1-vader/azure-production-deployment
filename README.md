@@ -42,8 +42,8 @@ This diagram describes the intended Azure configuration, not proof of deployed r
 | Area | Status |
 |---|---|
 | Terraform resources: RG, VNet, delegated subnets, NSG, private DNS, ACR, ACA, identity/RBAC, PostgreSQL | Defined in repository |
-| Terraform fmt/validate | Changed files pass fmt; provider validation awaits GitHub CI (local provider socket blocked) |
-| GitHub Actions CI | Existing tests and Docker build passed [run 41895884095](https://github.com/davidandrelee1-vader/azure-production-deployment/actions/runs/41895884095); added Terraform CI awaits publication |
+| Terraform fmt/validate | Monitoring files checked by fmt; provider schema validation runs in GitHub CI |
+| GitHub Actions CI | Tests, migrations, Docker build and Terraform validation; [latest runs](https://github.com/davidandrelee1-vader/azure-production-deployment/actions/workflows/ci.yml) |
 | Docker build | Previously reported local build |
 | Gunicorn startup | Previously reported locally, two workers on port 5000 |
 | `/health` | Previously reported HTTP 200 locally |
@@ -111,7 +111,7 @@ CI uses a temporary PostgreSQL 16 service and runs the versioned migrations befo
 
 ## Verification of this update
 
-Formatting of the changed Terraform files, documentation links, and the disabled deployment guard were checked locally. Provider initialization completed with AzureRM 4.81.0; the lockfile adds its Linux package hash without changing the provider version. Local validation could not complete because this execution environment blocks the provider Unix socket. The added CI validation must pass after publication. The badge and linked successful run currently describe the prior published commit.
+Formatting of the changed Terraform files, documentation links, and the disabled deployment guard were checked locally. CI runs all six application/database tests, builds Docker, and validates Terraform with the Azure backend disabled. The provider stays at locked AzureRM 4.81.0; platform hashes are recorded from signed provider packages. Local provider validation is restricted by this execution environment's Unix socket policy, so GitHub Actions supplies the provider schema check. The badge links to the latest published CI result. No Azure plan or apply is part of these checks.
 
 ## Resume-ready description
 
