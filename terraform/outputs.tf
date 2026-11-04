@@ -40,3 +40,8 @@ output "container_app_name" {
   description = "Azure Container App name"
   value       = azurerm_container_app.api.name
 }
+
+output "postgresql_fqdn" {
+  description = "Private PostgreSQL Flexible Server hostname"
+  value       = azurerm_postgresql_flexible_server.main.fqdn
+}
