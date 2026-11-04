@@ -16,8 +16,8 @@ permissions:
 
 
 jobs:
-  deploy:
-    name: Prepare Azure Deployment
+    prepare:
+    name: Validate and Build Deployment Image
     if: ${{ !inputs.execute_deployment }}
     runs-on: ubuntu-latest
 
@@ -90,34 +90,6 @@ jobs:
           docker build \
             -t ${{ env.IMAGE_NAME }}:${{ github.sha }} \
             ./app
-
-      - name: Azure login using OIDC
-        if: ${{ inputs.execute_deployment }}
-        uses: azure/login@v2
-        with:
-          client-id: ${{ vars.AZURE_CLIENT_ID }}
-          tenant-id: ${{ vars.AZURE_TENANT_ID }}
-          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
-
-      - name: Push image to Azure Container Registry
-        if: ${{ inputs.execute_deployment }}
-        run: |
-          az acr login --name "$ACR_NAME"
-
-          docker tag \
-            "$IMAGE_NAME:${{ github.sha }}" \
-            "$ACR_NAME.azurecr.io/$IMAGE_NAME:${{ github.sha }}"
-
-          docker push \
-            "$ACR_NAME.azurecr.io/$IMAGE_NAME:${{ github.sha }}"
-
-      - name: Deploy image to Azure Container Apps
-        if: ${{ inputs.execute_deployment }}
-        run: |
-          az containerapp update \
-            --name "$CONTAINER_APP_NAME" \
-            --resource-group "$RESOURCE_GROUP" \
-            --image "$ACR_NAME.azurecr.io/$IMAGE_NAME:${{ github.sha }}"
 
       - name: Deployment preparation summary
         run: |
