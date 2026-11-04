@@ -1,118 +1,121 @@
-# Azure Cloud Engineering & DevOps — Terraform, Container Apps and CI/CD
+# Azure Cloud Engineering Portfolio
 
-![CI](https://github.com/davidandrelee1-vader/azure-production-deployment/actions/workflows/ci.yml/badge.svg)
+**Terraform · Azure Container Apps · Docker · PostgreSQL · GitHub Actions**
 
-**Status:** Infrastructure definitions and CI are prepared; full Azure deployment **not yet verified**. Azure deployment workflow remains disabled. This repository is a portfolio project, not a live-production-service claim.
+[![CI](https://github.com/davidandrelee1-vader/azure-production-deployment/actions/workflows/ci.yml/badge.svg)](https://github.com/davidandrelee1-vader/azure-production-deployment/actions/workflows/ci.yml)
 
-## Project goal
+A cloud engineering and DevOps project that packages a Flask API in Docker, defines its Azure infrastructure with Terraform, and validates the application, database integration, image build, and infrastructure configuration through GitHub Actions.
 
-Demonstrate cloud engineering with Azure networking, infrastructure as code, managed identity, container delivery, monitoring configuration, and automated CI. Flask is a sample workload, not the primary focus.
+**Verified milestone:** All six application/database tests, Docker build, and Terraform validation passed in [CI run #18](https://github.com/davidandrelee1-vader/azure-production-deployment/actions/runs/41900513523). Repository implementation and documentation are complete for this milestone. Live Azure deployment and private database connectivity have not been independently verified. Automated paid deployment remains disabled.
 
 ## Architecture
 
 ```mermaid
 flowchart TD
-    DEV[Developer] --> GH[GitHub repository]
-    GH --> CI[GitHub Actions CI: tests and Docker build]
-    CI -. manual preparation only; deployment disabled .-> CD[Azure deployment gate]
-    subgraph AZ[Azure infrastructure — Terraform definitions]
-      ACR[Azure Container Registry]
-      MI[User-assigned managed identity / AcrPull]
-      subgraph VNET[Virtual network]
-        ACA[Container Apps environment and Flask API]
-        PG[PostgreSQL Flexible Server / appdb]
-        DNS[Private DNS zone]
-      end
-      LAW[Log Analytics workspace — configured]
-      MI --> ACR
-      ACR --> ACA
-      ACA --> PG
-      DNS --> PG
-      ACA -. logs .-> LAW
+    GitHub[GitHub repository] --> CI[GitHub Actions validation]
+    CI -. deployment disabled .-> Azure[Azure deployment boundary]
+    subgraph Infrastructure[Terraform infrastructure definitions]
+      ACR[Azure Container Registry] -->|Managed identity / AcrPull| API[Container Apps / Flask API]
+      API -->|Private network / TLS 5432| PG[PostgreSQL Flexible Server]
+      DNS[Private DNS / VNet link] -. hostname resolution .-> API
+      API -. environment logs .-> LAW[Log Analytics workspace]
     end
-    STATE[Existing Azure Storage backend] -. Terraform state .-> AZ
+    Azure -. reviewed deployment required .-> ACR
 ```
 
-This diagram describes the intended Azure configuration, not proof of deployed resources.
+The diagram describes the configured design. Terraform defines a VNet with separate delegated subnets for Container Apps and PostgreSQL, private database DNS, and an NSG rule allowing application traffic to PostgreSQL on port 5432. Default VNet NSG rules remain, so the explicit allow rule is not exclusive isolation.
 
-**Deployment prerequisites:** Build and push the application image to ACR; review Terraform plan and costs; confirm Azure permissions, private networking and database readiness. CI currently builds images but **does not push to ACR**.
+## What this project demonstrates
 
-## Implemented and verified
-
-| Area | Status |
+| Area | Implementation |
 |---|---|
-| Terraform resources: RG, VNet, delegated subnets, NSG, private DNS, ACR, ACA, identity/RBAC, PostgreSQL | Defined in repository |
-| Terraform fmt/validate | Monitoring files checked by fmt; provider schema validation runs in GitHub CI |
-| GitHub Actions CI | Tests, migrations, Docker build and Terraform validation; [latest runs](https://github.com/davidandrelee1-vader/azure-production-deployment/actions/workflows/ci.yml) |
-| Docker build | Previously reported local build |
-| Gunicorn startup | Previously reported locally, two workers on port 5000 |
-| `/health` | Previously reported HTTP 200 locally |
-| `/db-health` without DB | Previously reported HTTP 503 locally (expected) |
-| PostgreSQL Azure connectivity | Not tested |
-| Cloud image pull and Azure end-to-end deployment | Not tested |
-| Azure monitoring | Log Analytics configured in Terraform; not deployed |
+| Infrastructure as code | Separate Terraform files for networking, identity, registry, application, PostgreSQL, monitoring and outputs |
+| Container delivery | Non-root Python container running Gunicorn with two workers on port 5000 |
+| Identity and access | User-assigned managed identity with AcrPull for registry access |
+| Private database design | PostgreSQL 16 Flexible Server, delegated subnet, public access disabled and VNet-linked private DNS |
+| Database transport | `PGSSLMODE=verify-full` and the container CA bundle configured for Azure connections |
+| Monitoring | Log Analytics workspace with 30-day retention connected to the Container Apps environment |
+| CI | PostgreSQL service, migrations, six pytest tests, Docker build and credential-free Terraform validation |
+| Deployment control | Manual preparation workflow; Azure deploy job is unconditionally disabled |
+| State management | Existing Azure Storage backend configured separately from application infrastructure |
 
-## Cloud engineering highlights
+## Verification evidence
 
-- **Networking:** Separate delegated subnets for Container Apps and PostgreSQL; private PostgreSQL DNS and network security rule.
-- **Identity:** User-assigned managed identity and role-based ACR pull permission.
-- **Infrastructure as Code:** AzureRM Terraform resources with an existing remote Azure Storage state backend.
-- **Container operations:** Docker image, non-root runtime user, Gunicorn and health endpoint.
-- **CI/CD:** GitHub Actions automated tests and Docker build; deployment is deliberately blocked.
-- **Database connectivity:** PostgreSQL connection settings use `PGSSLMODE=verify-full` and a CA bundle path, but no live Azure TLS handshake has been verified.
+![Successful CI run showing tests, Terraform validation and Docker build](docs/images/ci-success.jpg)
 
-## Repository map
+Screenshot: [run #18](https://github.com/davidandrelee1-vader/azure-production-deployment/actions/runs/41900513523), commit `f2b7f5c`, November 4, 2026. This is CI evidence, not proof of live Azure resources. The badge above tracks subsequent runs.
 
-- `terraform/`: Infrastructure definitions and remote backend.
-- `app/`: Sample Flask API and Dockerfile.
-- `database/`: Sample migrations.
-- `.github/workflows/ci.yml`: Automated tests and image build.
-- `.github/workflows/azure-deploy.yml`: Manual preparation only; `deploy` job has `if: false`.
-- `docs/`: Architecture, verification, and operations documentation.
+| Check | Verified result |
+|---|---|
+| Flask endpoint and input validation tests | Passed |
+| PostgreSQL connectivity and transaction integration tests | Passed against temporary CI PostgreSQL 16 |
+| Versioned SQL migrations | Applied before CI tests |
+| Docker image build | Passed |
+| Terraform monitoring-file formatting and full configuration validation | Passed with remote backend disabled |
+| GitHub Actions syntax | Passed actionlint in [run 41900160120](https://github.com/davidandrelee1-vader/azure-production-deployment/actions/runs/41900160120) |
+| Live Azure image pull, private DNS/TLS and API-to-database connectivity | Requires Azure runtime verification |
+| Live log ingestion | Requires Azure runtime verification |
 
-## Architecture and delivery documentation
-
-- [Architecture](docs/ARCHITECTURE.md): traffic, private networking, identity and logging.
-- [CI/CD](docs/CI_CD.md): triggers, checks, permissions and deployment safeguards.
-- [Operations](docs/OPERATIONS.md): runtime troubleshooting and log queries.
-
-## Safe local checks
-
-```powershell
-terraform -chdir=terraform fmt -check
-terraform -chdir=terraform validate
-docker build -t azure-production-api:local ./app
-```
-
-These do not provision Azure infrastructure. Running `terraform plan` against the remote backend can still require Azure credentials and access. Do **not** run `terraform apply` without reviewing cost and resource changes.
-
-## Deployment handoff
-
-See [docs/DEPLOYMENT_HANDOFF.md](docs/DEPLOYMENT_HANDOFF.md) for the limited steps requiring Azure access and cost approval. The deployment workflow is **not enabled** in this package.
-
-## Security and cost notes
-
-- Azure PostgreSQL, Container Apps, ACR, Log Analytics, and state storage can incur costs, even when application replicas scale to zero.
-- Keep `.env`, `.tfvars`, Terraform state and credentials out of Git.
-- PostgreSQL administrator credentials are currently passed as a Container App secret. A least-privilege application database account is recommended before real production use.
-- Azure state storage persists separately from the application environment.
-- A successful `terraform validate` is not evidence of successful deployment.
+Terraform validation checks provider schemas and resource references. It does not verify Azure permissions, quotas, resource availability or network reachability.
 
 ## Application endpoints
 
-| Endpoint | Method | Purpose |
+| Method | Endpoint | Purpose |
 |---|---|---|
-| `/` | GET | Application information |
-| `/health` | GET | Process health, independent of PostgreSQL |
-| `/db-health` | GET | Database connection check; returns 503 on failure |
-| `/transactions` | GET / POST | Read or create sample transactions |
+| GET | `/` | Application information |
+| GET | `/health` | Application process health |
+| GET | `/db-health` | Database connection check; 503 on connection failure |
+| POST | `/transactions` | Validate and store a sample transaction |
+| GET | `/transactions` | Retrieve recent transactions |
 
-CI uses a temporary PostgreSQL 16 service and runs the versioned migrations before all six tests. Local development remains available through `docker-compose.yml`; credentials belong in an ignored `.env` file.
+`/health` can succeed while `/db-health` fails. This distinction helps separate application availability from database connectivity problems. ACA probes are not currently configured in Terraform.
 
-## Verification of this update
+## CI and deployment behavior
 
-Formatting of the changed Terraform files, documentation links, and the disabled deployment guard were checked locally. CI runs all six application/database tests, builds Docker, and validates Terraform with the Azure backend disabled. The provider stays at locked AzureRM 4.81.0; platform hashes are recorded from signed provider packages. Local provider validation is restricted by this execution environment's Unix socket policy, so GitHub Actions supplies the provider schema check. The badge links to the latest published CI result. No Azure plan or apply is part of these checks.
+Pushes and pull requests to `main` run the application/database tests and Docker build. An independent Terraform job runs formatting checks, initializes with `-backend=false -lockfile=readonly`, and validates the full configuration without Azure credentials. CI does not push an image to ACR or provision Azure resources.
 
-## Resume-ready description
+The manual `azure-deploy.yml` workflow prepares an image with its default input. Its deploy job has `if: ${{ false }}`. Setting its input to true does not enable deployment. The separate manual OIDC test only authenticates and displays account information.
 
-**Azure Cloud Engineering & DevOps Portfolio Project:** Authored Terraform infrastructure for Azure Container Apps, Container Registry, isolated networking, private PostgreSQL, and managed identity/RBAC. Implemented GitHub Actions CI with tests and Docker build validation; verified local container health and maintained safeguards preventing unapproved Azure deployment.
+The Container App expects `azure-production-api:1.0` in ACR. CI builds a runner-local image, while Compose uses the local tag `2.0`; neither automatically publishes the Azure tag. A new registry must be provisioned before an image can be pushed, so the first Azure rollout needs a reviewed sequence rather than an assumed single apply.
+
+## Local development
+
+Requirements: Docker with Compose. Create an ignored `.env` file containing a strong local `POSTGRES_PASSWORD`, then start the stack:
+
+```bash
+docker compose up -d --build
+```
+
+The API is bound to `127.0.0.1:5001` and PostgreSQL to `127.0.0.1:5432`. Apply migrations from the project root:
+
+```bash
+docker compose run --rm --no-deps -v "${PWD}/database:/database:ro" -w /database --entrypoint python api migrate.py
+```
+
+Check `http://localhost:5001/health` and `http://localhost:5001/db-health`. Stop with `docker compose down`; the named database volume persists. Adding `-v` deletes that local data. Integration tests are restricted to `testdb`; CI creates that disposable database separately.
+
+## Repository guide
+
+| Path | Contents |
+|---|---|
+| `terraform/` | Azure infrastructure and remote backend configuration |
+| `app/` | Flask workload, Dockerfile and tests |
+| `database/` | Migration runner and versioned SQL |
+| `.github/workflows/` | CI, workflow linting, manual preparation and OIDC test |
+| `docker-compose.yml` | Local API and PostgreSQL stack |
+| [Architecture](docs/ARCHITECTURE.md) | Resource boundaries, traffic, identity and logging |
+| [CI/CD](docs/CI_CD.md) | Triggers, permissions and deployment safeguards |
+| [Operations](docs/OPERATIONS.md) | Troubleshooting and Log Analytics queries |
+| [Deployment handoff](docs/DEPLOYMENT_HANDOFF.md) | Azure rollout, validation and cleanup sequence |
+
+## Operational limits
+
+- PostgreSQL, ACR, logs and state storage can incur charges independently of application traffic. No paid resources are created by CI.
+- Secrets, `.env`, variable values and Terraform state belong outside Git. Sensitive Terraform values may still exist in remote state, which needs restricted access.
+- The workload currently uses PostgreSQL administrator credentials through a Container App secret. A least-privilege database user remains a production prerequisite.
+- Monitoring covers environment logs. Metric alerts, notification action groups, dashboards and application tracing are future improvements.
+- Live Azure verification should cover revision health, image pull, private DNS/TLS, database migrations, API operations and log ingestion. Screenshots should show results without credentials or private account details.
+
+## Portfolio summary
+
+Built an Azure cloud engineering portfolio project using Terraform, Container Apps, Container Registry, private PostgreSQL networking and managed identity. Implemented GitHub Actions checks for application/database tests, Docker builds and Terraform validation, and configured Log Analytics with documented deployment and operations procedures.
