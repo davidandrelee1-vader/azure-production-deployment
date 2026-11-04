@@ -15,6 +15,11 @@ resource "azurerm_container_app" "api" {
     identity = azurerm_user_assigned_identity.container_app.id
   }
 
+  secret {
+    name  = "postgres-password"
+    value = var.postgres_admin_password
+  }
+
   ingress {
     external_enabled = true
     target_port      = 5000
@@ -38,6 +43,36 @@ resource "azurerm_container_app" "api" {
       env {
         name  = "APP_ENV"
         value = "development"
+      }
+
+      env {
+        name  = "PGHOST"
+        value = azurerm_postgresql_flexible_server.main.fqdn
+      }
+
+      env {
+        name  = "PGPORT"
+        value = "5432"
+      }
+
+      env {
+        name  = "PGDATABASE"
+        value = azurerm_postgresql_flexible_server_database.app.name
+      }
+
+      env {
+        name  = "PGUSER"
+        value = var.postgres_admin_username
+      }
+
+      env {
+        name        = "PGPASSWORD"
+        secret_name = "postgres-password"
+      }
+
+      env {
+        name  = "PGSSLMODE"
+        value = "verify-full"
       }
     }
   }
