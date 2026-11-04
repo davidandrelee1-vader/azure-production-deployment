@@ -54,7 +54,9 @@ jobs:
             -p 5432:5432 \
             postgres:16
 
-          for i in {1..30}; do
+
+          for ((i=1; i<=30; i++)); do
+            echo "PostgreSQL readiness attempt $i"
             if docker exec ci-postgres pg_isready -U appuser -d testdb; then
               exit 0
             fi
@@ -62,6 +64,7 @@ jobs:
           done
 
           exit 1
+
 
       - name: Apply database migrations
         env:
