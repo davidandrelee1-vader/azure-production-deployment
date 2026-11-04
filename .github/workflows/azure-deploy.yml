@@ -16,7 +16,7 @@ permissions:
 
 
 jobs:
-    prepare:
+  prepare:
     name: Validate and Build Deployment Image
     if: ${{ !inputs.execute_deployment }}
     runs-on: ubuntu-latest
@@ -97,3 +97,16 @@ jobs:
           echo "Deployment enabled: ${{ inputs.execute_deployment }}"
           echo "ACR: $ACR_NAME"
           echo "Container App: $CONTAINER_APP_NAME"
+
+  deploy:
+    name: Deploy to Azure Container Apps
+    needs: prepare
+    if: ${{ false }}
+    runs-on: ubuntu-latest
+    environment: production
+
+    steps:
+      - name: Deployment disabled
+        run: |
+          echo "Azure deployment is disabled."
+          echo "Infrastructure and permissions must be reviewed first."
