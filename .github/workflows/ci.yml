@@ -15,7 +15,7 @@ permissions:
 jobs:
   test:
     name: Test Flask Application and PostgreSQL
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
 
     services:
       postgres:
@@ -70,7 +70,7 @@ jobs:
 
   docker-build:
     name: Validate Docker Build
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: test
 
     steps:

@@ -11,7 +11,7 @@ permissions:
 jobs:
   azure-login:
     name: Verify Azure OIDC Login
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
 
     steps:
       - name: Authenticate to Azure
