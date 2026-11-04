@@ -1,0 +1,41 @@
+name: Validate GitHub Actions Workflows
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/**"
+  pull_request:
+    paths:
+      - ".github/workflows/**"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  actionlint:
+    name: Check Workflow Syntax
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+
+      - name: Run actionlint
+        shell: bash
+        run: |
+          curl -fsSL -o actionlint.tar.gz \
+            https://github.com/rhysd/actionlint/releases/download/v1.7.7/actionlint_1.7.7_linux_amd64.tar.gz
+
+          curl -fsSL -o checksums.txt \
+            https://github.com/rhysd/actionlint/releases/download/v1.7.7/actionlint_1.7.7_checksums.txt
+
+          grep 'actionlint_1.7.7_linux_amd64.tar.gz' checksums.txt | \
+            sed 's/actionlint_1.7.7_linux_amd64.tar.gz/actionlint.tar.gz/' | \
+            sha256sum --check
+
+          tar -xzf actionlint.tar.gz actionlint
+          ./actionlint -color

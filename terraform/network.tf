@@ -61,8 +61,8 @@ resource "azurerm_network_security_rule" "allow_postgresql" {
   protocol                    = "Tcp"
   source_port_range           = "*"
   destination_port_range      = "5432"
-  source_address_prefix       = "10.20.1.0/27"
-  destination_address_prefix  = "10.20.2.0/27"
+  source_address_prefix       = var.app_subnet_cidr
+  destination_address_prefix  = var.db_subnet_cidr
   resource_group_name         = azurerm_resource_group.main.name
   network_security_group_name = azurerm_network_security_group.postgresql.name
 }
