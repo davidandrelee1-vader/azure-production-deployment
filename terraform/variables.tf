@@ -63,3 +63,17 @@ variable "db_subnet_cidr" {
 
 
 }
+variable "postgres_admin_username" {
+  description = "PostgreSQL administrator username"
+  type        = string
+  default     = "pgadminuser"
+}
+
+
+variable "postgres_admin_password" {
+  description = "PostgreSQL administrator password"
+  type        = string
+  sensitive   = true
+  nullable    = false
+}
+
