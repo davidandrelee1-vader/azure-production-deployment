@@ -1,3 +1,4 @@
+
 resource "azurerm_container_app" "api" {
   name                         = "ca-azure-production-api-dev"
   container_app_environment_id = azurerm_container_app_environment.main.id
@@ -73,6 +74,11 @@ resource "azurerm_container_app" "api" {
       env {
         name  = "PGSSLMODE"
         value = "verify-full"
+      }
+
+      env {
+        name  = "PGSSLROOTCERT"
+        value = "/etc/ssl/certs/ca-certificates.crt"
       }
     }
   }
